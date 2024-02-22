@@ -40,32 +40,49 @@ app.get("/api/hello", function (req, res) {
 app.post("/api/shorturl", (req, res) => {
   var original = req.body.url;
   let inputShort = 1;
-  IP.findOne({})
-    .sort({ short: "desc" })
-    .then((result) => {
-      if (result != undefined) {
-        inputShort = result.short + 1;
-      }
-      var newObj = new IP({
-        original: original,
-        short: inputShort,
-      });
-      newObj
-        .save()
+  IP.findOne({ original: original }).then((result) => {
+    if (result == undefined) {
+      IP.findOne({})
+        .sort({ short: "desc" })
+        .then((result) => {
+          if (result != undefined) {
+            inputShort = result.short + 1;
+          }
+          var newObj = new IP({
+            original: original,
+            short: inputShort,
+          });
+          newObj.save().catch((err) => {
+            if (err) return console.error(err);
+          });
+
+          res.json({ original_url: original, short_url: inputShort });
+        })
         .catch((err) => {
           if (err) return console.error(err);
         });
+    }
+    else {
+      res.json({original_url: original, short_url: result.short});
+    }
+  });
+});
+app.get("/api/shorturl/:short_url", (req, res) => {
+  var shortUrl = parseInt(req.params.short_url);
+  console.log(shortUrl);
 
-      res.json({ original: original, short_url: inputShort });
+  IP.findOne({ short: shortUrl })
+    .then((result) => {
+      if (!result) {
+        return res.status(404).send({ error: "Short URL not found." });
+      }
+      var link = result.original;
+
+      res.redirect(link);
     })
     .catch((err) => {
       if (err) return console.error(err);
     });
-});
-app.get("/api/shorturl/:short_url", (req, res) => {
-  var shortUrl = req.params.short_url;
-  console.log(shortUrl);
-  res.json({ hello: "this is the temp page of short url" });
 });
 
 //end code
