@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const isUrl=require('is-url');
 const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
@@ -40,8 +41,16 @@ app.get("/api/hello", function (req, res) {
 app.post("/api/shorturl", (req, res) => {
   var original = req.body.url;
   let inputShort = 1;
+
+  // handle invalid URL
+  if (!isUrl(original)) {
+    res.json({error:"invalid url"})
+  }
+
+  // Valid URL handler
   IP.findOne({ original: original }).then((result) => {
     if (result == undefined) {
+      // if URL not exist in the db
       IP.findOne({})
         .sort({ short: "desc" })
         .then((result) => {
@@ -63,6 +72,7 @@ app.post("/api/shorturl", (req, res) => {
         });
     }
     else {
+      // if URL already exist in the db
       res.json({original_url: original, short_url: result.short});
     }
   });
