@@ -4,7 +4,9 @@ const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const shortUrl = require("node-url-shortener");
+/** 1) Install & Set up mongoose */
+const mongoose = require("mongoose");
+mongoose.connect(process.env.MONGO_URI);
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -29,18 +31,20 @@ app.get("/api/hello", function (req, res) {
 //code here
 app.post("/api/shorturl", (req, res) => {
   var original = req.body.url;
-  shortUrl.short(original, (err, url) => {
-    if (err) {
-      console.error(err);
-      res
-        .status(500)
-        .json({ error: "An error occurred while shortening the URL" });
-    } else {
-      res.json({ original_url: original, short_url: url });
-    }
-  });
+});
+app.get("/api/shorturl/:short_url", (req, res) => {
+  var shortUrl = req.params.short_url;
+  console.log(shortUrl);
+  res.json({ hello: "this is the temp page of short url" });
 });
 
+// Create a'IP' model
+const Schema = mongoose.Schema;
+const ipSchema = new Schema({
+  ipAddress: String,
+});
+
+// CCreate and save a Ip
 //end code
 app.listen(port, function () {
   console.log(`Listening on port ${port}`);
