@@ -7,6 +7,14 @@ const app = express();
 /** 1) Install & Set up mongoose */
 const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URI);
+
+// Create a'IP' model
+const Schema = mongoose.Schema;
+const ipSchema = new Schema({
+  original: { type: String, required: true },
+  short: Number,
+});
+let IP = mongoose.model("IP", ipSchema);
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -31,6 +39,28 @@ app.get("/api/hello", function (req, res) {
 //code here
 app.post("/api/shorturl", (req, res) => {
   var original = req.body.url;
+  let inputShort = 1;
+  IP.findOne({})
+    .sort({ short: "desc" })
+    .then((result) => {
+      if (result != undefined) {
+        inputShort = result.short + 1;
+      }
+      var newObj = new IP({
+        original: original,
+        short: inputShort,
+      });
+      newObj
+        .save()
+        .catch((err) => {
+          if (err) return console.error(err);
+        });
+
+      res.json({ original: original, short_url: inputShort });
+    })
+    .catch((err) => {
+      if (err) return console.error(err);
+    });
 });
 app.get("/api/shorturl/:short_url", (req, res) => {
   var shortUrl = req.params.short_url;
@@ -38,13 +68,6 @@ app.get("/api/shorturl/:short_url", (req, res) => {
   res.json({ hello: "this is the temp page of short url" });
 });
 
-// Create a'IP' model
-const Schema = mongoose.Schema;
-const ipSchema = new Schema({
-  ipAddress: String,
-});
-
-// CCreate and save a Ip
 //end code
 app.listen(port, function () {
   console.log(`Listening on port ${port}`);
